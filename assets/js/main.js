@@ -704,7 +704,7 @@ async function expulsarAluno(){
    EDITOR DE SIMULADO  —  FIX #8: redireciona para v2
 ══════════════════════════════════════════════════════════ */
 window.abrirEditorSimulado = simId => {
-  window.location.href = `/src/pages/quiz-editor-v2.html?sim=${simId}`;
+  window.location.href = `https://olinkaquiboboca.github.io/dashboard-turma/src/pages/quiz-editor-v2.html?sim=${simId}`;
 };
 
 /* ══════════════════════════════════════════════════════════
