@@ -1,0 +1,24 @@
+# Variáveis de ambiente reais — NUNCA commitar
+.env
+.env.local
+.env.production
+
+# Sistemas operacionais
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (se usado localmente para utilitários)
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+
+# GitHub Pages (gerado pelo Actions — não commitar manualmente)
+gh-pages/

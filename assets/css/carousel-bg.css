@@ -1,0 +1,127 @@
+/* ================================================================
+   carousel-bg.css  —  carrossel de fundo da TELA DE LOGIN
+   
+   ARQUITETURA: o #bg-carousel é injetado como primeiro filho
+   do #tela-login pelo JavaScript. Ele fica absolutamente
+   posicionado dentro do login, que tem position:relative e
+   min-height:100vh — ou seja, cobre exatamente a viewport
+   enquanto a tela de login está visível.
+   
+   O #main-app não é tocado: mantém seu fundo escuro original.
+   ================================================================ */
+
+/* O #tela-login precisa ser o contexto de posicionamento
+   para que o carrossel absoluto se ancore nele */
+#tela-login {
+  position: relative;  /* contexto para os filhos absolute */
+  overflow: hidden;    /* garante que nada vaze para fora */
+  /* Removemos o background-image estático — o carrossel substitui */
+  background-image: none !important;
+  background-color: #070a11; /* fallback enquanto a primeira imagem carrega */
+}
+
+/* ----------------------------------------------------------------
+   Container do carrossel: preenche o #tela-login por completo.
+   Fica atrás do .login-card graças ao z-index baixo.
+   ---------------------------------------------------------------- */
+#bg-carousel {
+  position: absolute;
+  inset: 0;        /* top:0; right:0; bottom:0; left:0 */
+  z-index: 0;      /* base — o .login-card ficará em z-index maior */
+}
+
+/* ----------------------------------------------------------------
+   Cada slide: empilhado e invisível por padrão.
+   O CSS declara a transição; o JS só troca a classe .active.
+   ---------------------------------------------------------------- */
+.bgc-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease-in-out;
+  will-change: opacity;
+}
+
+.bgc-slide.active {
+  opacity: 1;
+}
+
+/* Imagem: cobre tudo sem distorção + Ken Burns suave */
+.bgc-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  animation: bgc-kenburns 22s ease-in-out infinite alternate;
+}
+
+/* Vídeo: sem Ken Burns — o conteúdo já tem movimento */
+.bgc-slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+@keyframes bgc-kenburns {
+  from { transform: scale(1.00) translate(0px, 0px); }
+  to   { transform: scale(1.07) translate(-1.5%, 1%); }
+}
+
+/* ----------------------------------------------------------------
+   Overlay escuro: fica entre o carrossel e o .login-card.
+   Garante que o card seja legível sobre qualquer foto.
+   Reproduz o gradiente radial que existia antes no style.css
+   para manter a mesma estética que já funcionava bem.
+   ---------------------------------------------------------------- */
+#bg-carousel-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 80% 80% at 50% 50%,
+    rgba(7, 10, 17, 0.45) 0%,
+    rgba(7, 10, 17, 0.80) 55%,
+    rgba(7, 10, 17, 0.97) 100%
+  );
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------
+   .login-card sobe acima do carrossel e do overlay.
+   position:relative já estava no style.css original,
+   só precisamos garantir o z-index correto.
+   ---------------------------------------------------------------- */
+.login-card {
+  position: relative;
+  z-index: 2;
+}
+
+/* ----------------------------------------------------------------
+   Pontinhos indicadores (opcionais): flutuam no rodapé do login.
+   ---------------------------------------------------------------- */
+#bg-carousel-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.bgc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.30);
+  transition: background 0.4s ease, transform 0.4s ease;
+}
+
+.bgc-dot.active {
+  background: rgba(255, 255, 255, 0.88);
+  transform: scale(1.4);
+}

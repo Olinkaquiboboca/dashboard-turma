@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #13161e;
+      --card:     #1a1e2a;
+      --border:   #252a3a;
+      --accent:   #4fffb0;
+      --accent2:  #ff6b6b;
+      --accent3:  #6b8aff;
+      --text:     #e8eaf0;
+      --muted:    #6b7280;
+      --font-ui:  'Syne', sans-serif;
+      --font-mono:'JetBrains Mono', monospace;
+      --radius:   8px;
+      --nav-h:    56px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+    }
+
+    /* ── TOPBAR ─────────────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: var(--nav-h);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .logo svg { width: 20px; height: 20px; }
+
+    .header-right { display: flex; gap: 8px; align-items: center; }
+
+    /* ── BOTÕES ─────────────────────────────────────────────────── */
+    .btn {
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--card); color: var(--text); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+    }
+
+    .btn-danger:hover { background: var(--accent2); color: #fff; }
+
+    .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+    /* ── MAIN CONTENT ───────────────────────────────────────────── */
+    .app-body {
+      margin-top: var(--nav-h);
+      height: calc(100vh - var(--nav-h));
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── TABS ───────────────────────────────────────────────────── */
+    .tab-panel {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .tab-panel.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .tab-panel::-webkit-scrollbar { width: 4px; }
+    .tab-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── TAB: QUESTÕES ──────────────────────────────────────────── */
+    #tab-questions {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .questions-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .questions-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+
+    .q-item {
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .q-item:hover { border-color: var(--border); }
+    .q-item.active { border-color: var(--accent); background: rgba(79,255,176,0.06); }
+
+    .q-item-badge {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .q-item-content { flex: 1; min-width: 0; }
+
+    .q-item-num {
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .q-item-text {
+      font-size: 0.82rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .q-item-arrow {
+      color: var(--muted);
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .questions-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .questions-empty .big-icon { font-size: 3rem; }
+    .questions-empty h3 { font-size: 1rem; color: var(--text); }
+    .questions-empty p { font-size: 0.82rem; }
+
+    /* ── TAB: EDITOR ────────────────────────────────────────────── */
+    #tab-editor {
+      padding: 20px;
+      padding-bottom: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .editor-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 180px);
+      gap: 14px;
+      color: var(--muted);
+      text-align: center;
+      padding: 40px;
+    }
+
+    .editor-empty .big-icon { font-size: 3rem; }
+    .editor-empty h3 { font-size: 1rem; color: var(--text); }
+    .editor-empty p { font-size: 0.8rem; max-width: 300px; }
+
+    /* ── TAB: PREVIEW ───────────────────────────────────────────── */
+    #tab-preview {
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+
+    .preview-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 180px);
+      gap: 14px;
+      color: var(--muted);
+      text-align: center;
+      padding: 40px;
+    }
+
+    .preview-empty .big-icon { font-size: 3rem; }
+    .preview-empty h3 { font-size: 1rem; color: var(--text); }
+    .preview-empty p { font-size: 0.8rem; }
+
+    .preview-type-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .preview-type-badge {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      background: var(--card);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── PREVIEW CARD ───────────────────────────────────────────── */
+    .preview-card {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .preview-card-accent {
+      height: 3px;
+    }
+
+    .preview-card-top {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preview-card-body { padding: 16px; }
+
+    .preview-q-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+    }
+
+    .preview-img { width: 100%; border-radius: 6px; margin-bottom: 12px; object-fit: cover; max-height: 200px; }
+
+    .preview-alt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+      font-size: 0.82rem;
+    }
+
+    .preview-alt.correct-alt { border-color: var(--accent); background: rgba(79,255,176,0.05); }
+
+    .preview-alt-letter {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+    }
+
+    .preview-alt.correct-alt .preview-alt-letter { background: var(--accent); color: #000; }
+
+    /* ── CAMPOS ─────────────────────────────────────────────────── */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+    input[type="text"],
+    textarea,
+    select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 0.875rem;
+      padding: 9px 12px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus { border-color: var(--accent); }
+
+    textarea { min-height: 90px; }
+    select option { background: var(--card); }
+
+    /* ── SECTION CARD ───────────────────────────────────────────── */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: visible;
+    }
+
+    .section-card-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-card-header:hover { background: rgba(255,255,255,0.02); }
+
+    .section-card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-card-body.collapsed { display: none; }
+
+    .chevron { transition: transform 0.2s; display: inline-block; }
+    .collapsed-header .chevron { transform: rotate(-90deg); }
+
+    /* ── RICH TOOLBAR ───────────────────────────────────────────── */
+    .rich-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+      align-items: center;
+    }
+
+    .rich-toolbar .sep {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      margin: 0 2px;
+    }
+
+    .tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      padding: 3px 7px;
+      transition: all 0.12s;
+    }
+
+    .tool-btn:hover { background: var(--card); color: var(--text); border-color: var(--border); }
+
+    .rich-textarea {
+      border-radius: 0 0 var(--radius) var(--radius) !important;
+      border-top: none !important;
+      min-height: 120px;
+    }
+
+    /* ── ALTERNATIVAS ───────────────────────────────────────────── */
+    .alternatives-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .alt-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alt-label {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .alt-label.correct { background: var(--accent); color: #000; }
+    .alt-row input[type="text"] { margin: 0; }
+
+    .mark-correct-btn {
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--font-ui);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .mark-correct-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .mark-correct-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    .remove-alt-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      transition: color 0.15s;
+    }
+
+    .remove-alt-btn:hover { color: var(--accent2); }
+
+    /* ── IMAGEM ─────────────────────────────────────────────────── */
+    .image-drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .image-drop-zone:hover { border-color: var(--accent); background: rgba(79,255,176,0.03); }
+    .image-drop-zone.has-image { border-style: solid; border-color: var(--accent); padding: 0; overflow: hidden; }
+    .image-drop-zone img { width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--radius); }
+    .image-drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .drop-hint { color: var(--muted); font-size: 0.8rem; }
+    .drop-hint span { display: block; font-size: 1.5rem; margin-bottom: 6px; }
+
+    /* ── COR DO PAINEL ──────────────────────────────────────────── */
+    .panel-color-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .color-swatch:hover { border-color: var(--text); }
+    .color-swatch.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent); }
+
+    input[type="color"] {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      background: none;
+    }
+
+    /* ── TABELA ─────────────────────────────────────────────────── */
+    .table-editor-wrap { overflow-x: auto; }
+
+    .table-editor { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+
+    .table-editor th,
+    .table-editor td { border: 1px solid var(--border); padding: 0; }
+
+    .table-editor th { background: var(--surface); }
+
+    .table-editor input {
+      border: none;
+      background: transparent;
+      padding: 6px 10px;
+      width: 100%;
+      font-size: 0.8rem;
+      color: var(--text);
+      font-family: var(--font-ui);
+    }
+
+    .table-editor input:focus { background: rgba(79,255,176,0.05); outline: none; }
+    .table-controls { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+    /* ── DIAGRAMA ───────────────────────────────────────────────── */
+    .mermaid-editor { display: flex; flex-direction: column; gap: 12px; }
+
+    .mermaid-preview {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      overflow: auto;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── TAGS ───────────────────────────────────────────────────── */
+    .tags-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 42px;
+      cursor: text;
+    }
+
+    .tag {
+      background: var(--border);
+      color: var(--text);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tag button { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-size: 0.8rem; }
+    .tag button:hover { color: var(--accent2); }
+
+    .tag-input {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      outline: none;
+      padding: 3px 0;
+      min-width: 80px;
+      flex: 1;
+    }
+
+    /* ── DIFICULDADE ────────────────────────────────────────────── */
+    .diff-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .diff-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .diff-btn[data-d="fácil"].active { background: #22c55e; color: #000; border-color: #22c55e; }
+    .diff-btn[data-d="médio"].active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+    .diff-btn[data-d="difícil"].active { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+    .diff-btn:hover { border-color: var(--text); }
+
+    /* ── META ROW ───────────────────────────────────────────────── */
+    .meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    @media (max-width: 480px) {
+      .meta-row { grid-template-columns: 1fr; }
+    }
+
+    /* ── IMPORT JSON SECTION WITHIN EDITOR ─────────────────────── */
+    .import-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .import-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+
+    /* ── MODAL ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 560px;
+      max-width: 95vw;
+      max-height: 88vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-title { font-size: 1rem; font-weight: 700; }
+
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+
+    .code-area {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    /* ── FORMAT GUIDE ───────────────────────────────────────────── */
+    .format-guide {
+      display: none;
+      background: var(--bg);
+      border: 1px solid var(--accent3);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    .format-guide.open { display: block; }
+
+    .format-guide h4 {
+      color: var(--accent);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+      margin-top: 14px;
+    }
+
+    .format-guide h4:first-child { margin-top: 0; }
+
+    .format-guide code {
+      background: var(--card);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent3);
+    }
+
+    .format-guide pre {
+      background: var(--card);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      overflow-x: auto;
+      margin: 6px 0;
+      white-space: pre;
+    }
+
+    .format-guide p { margin-bottom: 6px; color: var(--muted); }
+
+    /* ── CONFIGURAÇÕES ──────────────────────────────────────────── */
+    #tab-settings {
+      padding: 20px;
+      padding-bottom: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .settings-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .settings-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .settings-row {
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-label { font-size: 0.82rem; }
+    .settings-row-desc { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── TOAST ──────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ══════════════════════════════════════════════════════════════
+       FLOATING NAV BAR
+    ══════════════════════════════════════════════════════════════ */
+    .floating-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+      transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Estado EXPANDIDO */
+    .floating-nav .nav-bar {
+      background: rgba(19, 22, 30, 0.96);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(79,255,176,0.08);
+      backdrop-filter: blur(12px);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+
+    /* Estado COLAPSADO (bolinha) */
+    .floating-nav.collapsed .nav-bar {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--surface);
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 12px rgba(79,255,176,0.2);
+      cursor: pointer;
+    }
+
+    .floating-nav.collapsed .nav-bar:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(79,255,176,0.4);
+    }
+
+    /* Bolinha icon */
+    .nav-dot-icon {
+      display: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .floating-nav.collapsed .nav-dot-icon { display: block; }
+    .floating-nav.collapsed .nav-items { display: none; }
+
+    /* Nav items */
+    .nav-items {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 8px 14px;
+      border-radius: 24px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-ui);
+      position: relative;
+      min-width: 60px;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .nav-btn.active {
+      background: rgba(79,255,176,0.12);
+      color: var(--accent);
+    }
+
+    .nav-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .nav-btn-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .nav-sep {
+      width: 1px;
+      height: 28px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    /* Badge de contagem */
+    .nav-badge {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      background: var(--accent);
+      color: #000;
+      font-size: 0.55rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 1px 4px;
+      border-radius: 8px;
+      min-width: 14px;
+      text-align: center;
+    }
+
+    /* ── ANIMAÇÕES ──────────────────────────────────────────────── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .tab-panel.active > * {
+      animation: fadeInUp 0.22s ease both;
+    }
+
+    /* ── EMPTY STATE ────────────────────────────────────────────── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 40px;
+    }
+
+    .empty-state .big-icon { font-size: 3rem; }
+    .empty-state h3 { font-size: 1rem; color: var(--text); }
+    .empty-state p { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ TOPBAR ══════════════════════════════════════════════════ -->
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <path d="M7 9h10M7 12h7M7 15h5"/>
+      </svg>
+      Quiz Editor
+    </div>
+    <div class="header-right">
+      <!-- FIX #8.1: badge de status do simulado (atualizado por JS) -->
+      <span id="sim-status-badge" style="font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);padding:3px 8px;background:var(--card);border:1px solid var(--border);border-radius:4px;"></span>
+
+      <!-- FIX #8.3: split-button Salvar rascunho / Publicar / Publicar como privado -->
+      <button class="btn btn-ghost btn-sm" onclick="salvarRascunho()">💾 Salvar rascunho</button>
+
+      <!-- Split-button Publicar -->
+      <div style="display:inline-flex;position:relative;" id="publish-split">
+        <button class="btn btn-primary btn-sm" onclick="publicarSimulado()"
+          style="border-radius:var(--radius) 0 0 var(--radius);border-right:1px solid rgba(0,0,0,0.3);">
+          ✅ Publicar
+        </button>
+        <button class="btn btn-primary btn-sm" id="publish-dropdown-btn"
+          onclick="document.getElementById('publish-menu').classList.toggle('hidden')"
+          style="border-radius:0 var(--radius) var(--radius) 0;padding:7px 8px;">▾</button>
+        <div id="publish-menu" class="hidden"
+          style="position:absolute;top:100%;right:0;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;z-index:300;overflow:hidden;">
+          <button onclick="publicarPrivado();document.getElementById('publish-menu').classList.add('hidden')"
+            style="width:100%;padding:10px 14px;background:transparent;border:none;color:var(--text);font-family:var(--font-ui);font-size:0.82rem;text-align:left;cursor:pointer;">
+            🔒 Publicar como privado
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost btn-sm" onclick="openModal('export')">⬇ Exportar JSON</button>
+      <button class="btn btn-primary btn-sm" onclick="addQuestion()">+ Nova Questão</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.history.back()">← Voltar</button>
+    </div>
+  </header>
+
+  <!-- ══ APP BODY ══════════════════════════════════════════════ -->
+  <div class="app-body">
+
+    <!-- TAB: QUESTÕES -->
+    <div class="tab-panel active" id="tab-questions">
+      <div class="questions-header">
+        <span class="questions-title">Questões (<span id="q-count">0</span>)</span>
+        <button class="btn btn-ghost btn-sm" onclick="addQuestion()">+ Nova</button>
+      </div>
+      <div id="question-list-container">
+        <div class="questions-empty">
+          <div class="big-icon">📋</div>
+          <h3>Nenhuma questão ainda</h3>
+          <p>Crie uma nova questão ou importe um JSON.</p>
+          <button class="btn btn-primary" onclick="addQuestion()">+ Nova Questão</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: EDITOR -->
+    <div class="tab-panel" id="tab-editor">
+      <div id="editor-content">
+        <div class="editor-empty">
+          <div class="big-icon">✏️</div>
+          <h3>Nenhuma questão selecionada</h3>
+          <p>Vá até "Questões" e selecione ou crie uma.</p>
+          <button class="btn btn-primary" onclick="addQuestion(); switchTab('tab-editor')">+ Nova Questão</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: PREVIEW -->
+    <div class="tab-panel" id="tab-preview">
+      <div id="preview-content">
+        <div class="preview-empty">
+          <div class="big-icon">👁️</div>
+          <h3>Preview ao vivo</h3>
+          <p>Edite uma questão para ver o card aqui.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CONFIGURAÇÕES -->
+    <div class="tab-panel" id="tab-settings">
+      <h2 style="font-size:1rem;font-weight:700;margin-bottom:4px">Configurações</h2>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">Preferências do editor</p>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Dados</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Exportar questões</div>
+            <div class="settings-row-desc">Baixar todas as questões como arquivo .json</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('export')">⬇ Exportar</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Limpar tudo</div>
+            <div class="settings-row-desc">Remove todas as questões e reseta o editor</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Limpar</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Autosave</div>
+            <div class="settings-row-desc">Salva automaticamente no localStorage a cada 30s</div>
+          </div>
+          <span style="font-size:0.75rem;color:var(--accent)">✓ Ativo</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Sobre</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Formato JSON suportado</div>
+            <div class="settings-row-desc">Questões com múltipla escolha, dissertativa, V/F, imagens, tabelas, diagramas Mermaid</div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Armazenamento</div>
+            <div class="settings-row-desc">Dados salvos localmente no navegador via localStorage</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.app-body -->
+
+  <!-- ══ FLOATING NAV ════════════════════════════════════════════ -->
+  <div class="floating-nav" id="floating-nav">
+    <div class="nav-bar" id="nav-bar-inner" onclick="handleNavBarClick(event)">
+      <!-- Bolinha (estado colapsado) -->
+      <div class="nav-dot-icon"></div>
+
+      <!-- Items (estado expandido) -->
+      <div class="nav-items">
+        <button class="nav-btn active" data-tab="tab-questions" onclick="switchTab('tab-questions')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+          <span class="nav-btn-label">Questões</span>
+          <span class="nav-badge" id="nav-badge-q" style="display:none">0</span>
+        </button>
+
+        <button class="nav-btn" data-tab="tab-editor" onclick="switchTab('tab-editor')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <span class="nav-btn-label">Editor</span>
+        </button>
+
+        <button class="nav-btn" data-tab="tab-preview" onclick="switchTab('tab-preview')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span class="nav-btn-label">Preview</span>
+        </button>
+
+        <div class="nav-sep"></div>
+
+        <button class="nav-btn" data-tab="tab-settings" onclick="switchTab('tab-settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+          <span class="nav-btn-label">Config</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL IMPORTAR/EXPORTAR ════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">Modal</span>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">✓ <span id="toast-msg"></span></div>
+
+  <script>
+    /* ════════════════════════════════════════════════════════
+       ESTADO GLOBAL
+    ════════════════════════════════════════════════════════ */
+    let questions = [];
+    let currentIndex = -1;
+    let mermaidTimer = null;
+    let activeTab = 'tab-questions';
+
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+    const PRESET_COLORS = ['#4fffb0','#ff6b6b','#6b8aff','#ffd36b','#ff9ff3','#54a0ff','#5f27cd','#fff'];
+
+    /* ════════════════════════════════════════════════════════
+       FLOATING NAV — auto-collapse após 3s sem interação
+    ════════════════════════════════════════════════════════ */
+    const floatingNav = document.getElementById('floating-nav');
+    let collapseTimer = null;
+
+    function resetCollapseTimer() {
+      clearTimeout(collapseTimer);
+      floatingNav.classList.remove('collapsed');
+      collapseTimer = setTimeout(() => {
+        floatingNav.classList.add('collapsed');
+      }, 3000);
+    }
+
+    floatingNav.addEventListener('mouseenter', () => {
+      clearTimeout(collapseTimer);
+      floatingNav.classList.remove('collapsed');
+    });
+
+    floatingNav.addEventListener('mouseleave', () => {
+      collapseTimer = setTimeout(() => {
+        floatingNav.classList.add('collapsed');
+      }, 3000);
+    });
+
+    floatingNav.addEventListener('touchstart', () => {
+      resetCollapseTimer();
+    }, { passive: true });
+
+    // Inicia o timer ao carregar
+    resetCollapseTimer();
+
+    function handleNavBarClick(e) {
+      if (floatingNav.classList.contains('collapsed')) {
+        // Apenas expande
+        floatingNav.classList.remove('collapsed');
+        resetCollapseTimer();
+        e.stopPropagation();
+      }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       NAVEGAÇÃO POR TABS
+    ════════════════════════════════════════════════════════ */
+    function switchTab(tabId) {
+      if (activeTab === tabId) {
+        resetCollapseTimer();
+        return;
+      }
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`.nav-btn[data-tab="${tabId}"]`)?.classList.add('active');
+
+      activeTab = tabId;
+      resetCollapseTimer();
+
+      // Se foi para preview, re-renderiza
+      if (tabId === 'tab-preview') renderPreview();
+      if (tabId === 'tab-editor') {
+        renderEditor();
+        if (currentIndex >= 0 && questions[currentIndex]?.diagram) {
+          scheduleMermaidPreview(100);
+        }
+      }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       ESTRUTURA PADRÃO
+    ════════════════════════════════════════════════════════ */
+    function newQuestion() {
+      return {
+        id: Date.now(),
+        type: 'multipla',
+        enunciado: '',
+        image: null,
+        imageCaption: '',
+        alternatives: [
+          { text: '', correct: false },
+          { text: '', correct: false },
+          { text: '', correct: false },
+          { text: '', correct: false }
+        ],
+        dissertativa_gabarito: '',
+        panelColor: '#4fffb0',
+        difficulty: 'médio',
+        tags: [],
+        table: null,
+        diagram: null,
+        explanation: '',
+        subject: ''
+      };
+    }
+
+    /* ════════════════════════════════════════════════════════
+       SIDEBAR — lista de questões
+    ════════════════════════════════════════════════════════ */
+    function renderSidebar() {
+      const container = document.getElementById('question-list-container');
+      const badge = document.getElementById('nav-badge-q');
+      document.getElementById('q-count').textContent = questions.length;
+
+      if (questions.length === 0) {
+        badge.style.display = 'none';
+        container.innerHTML = `
+          <div class="questions-empty">
+            <div class="big-icon">📋</div>
+            <h3>Nenhuma questão ainda</h3>
+            <p>Crie uma nova questão ou importe um JSON.</p>
+            <button class="btn btn-primary" onclick="addQuestion()">+ Nova Questão</button>
+          </div>`;
+        return;
+      }
+
+      badge.style.display = 'block';
+      badge.textContent = questions.length;
+
+      container.innerHTML = questions.map((q, i) => `
+        <div class="q-item ${i === currentIndex ? 'active' : ''}" onclick="selectQuestion(${i})">
+          <div class="q-item-badge" style="background:${q.panelColor}"></div>
+          <div class="q-item-content">
+            <div class="q-item-num">Questão ${i + 1} · ${q.type}</div>
+            <div class="q-item-text">${q.enunciado || '(sem enunciado)'}</div>
+          </div>
+          <div class="q-item-arrow">›</div>
+        </div>
+      `).join('');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       ADICIONAR / SELECIONAR / DELETAR
+    ════════════════════════════════════════════════════════ */
+    function addQuestion() {
+      saveCurrentToState();
+      questions.push(newQuestion());
+      currentIndex = questions.length - 1;
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+      switchTab('tab-editor');
+      resetCollapseTimer();
+    }
+
+    function selectQuestion(i) {
+      saveCurrentToState();
+      currentIndex = i;
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+      switchTab('tab-editor');
+      resetCollapseTimer();
+    }
+
+    function deleteQuestion(i) {
+      if (!confirm(`Deletar questão ${i + 1}?`)) return;
+      questions.splice(i, 1);
+      currentIndex = Math.min(currentIndex, questions.length - 1);
+      if (questions.length === 0) currentIndex = -1;
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+    }
+
+    function clearAll() {
+      if (!confirm('Limpar TODAS as questões? Essa ação não pode ser desfeita.')) return;
+      questions = [];
+      currentIndex = -1;
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+      toast('Tudo limpo!');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       SALVAR ESTADO
+    ════════════════════════════════════════════════════════ */
+    function saveCurrentToState() {
+      if (currentIndex < 0 || currentIndex >= questions.length) return;
+      if (activeTab !== 'tab-editor') return;
+      const q = questions[currentIndex];
+      const el = (id) => document.getElementById(id);
+
+      q.type                 = el('q-type')?.value ?? q.type;
+      q.enunciado            = el('q-enunciado')?.value ?? q.enunciado;
+      q.imageCaption         = el('q-img-caption')?.value ?? q.imageCaption;
+      q.explanation          = el('q-explanation')?.value ?? q.explanation;
+      q.subject              = el('q-subject')?.value ?? q.subject;
+      q.dissertativa_gabarito = el('q-dissertativa')?.value ?? q.dissertativa_gabarito;
+      q.diagram              = el('q-diagram')?.value ?? q.diagram;
+
+      document.querySelectorAll('.alt-text-input').forEach((inp, idx) => {
+        if (q.alternatives[idx]) q.alternatives[idx].text = inp.value;
+      });
+    }
+
+    /* ════════════════════════════════════════════════════════
+       RENDERIZAR EDITOR
+    ════════════════════════════════════════════════════════ */
+    function renderEditor() {
+      const content = document.getElementById('editor-content');
+      if (currentIndex < 0) {
+        content.innerHTML = `
+          <div class="editor-empty">
+            <div class="big-icon">✏️</div>
+            <h3>Nenhuma questão selecionada</h3>
+            <p>Vá até "Questões" e selecione ou crie uma.</p>
+            <button class="btn btn-primary" onclick="addQuestion()">+ Nova Questão</button>
+          </div>`;
+        return;
+      }
+
+      const q = questions[currentIndex];
+
+      content.innerHTML = `
+        <!-- ── CABEÇALHO ── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="section-label" style="margin:0">Questão ${currentIndex + 1}</span>
+            <select id="q-type" onchange="onTypeChange(this.value)" style="width:auto;padding:5px 10px">
+              <option value="multipla" ${q.type==='multipla'?'selected':''}>Múltipla Escolha</option>
+              <option value="dissertativa" ${q.type==='dissertativa'?'selected':''}>Dissertativa</option>
+              <option value="verdadeiro_falso" ${q.type==='verdadeiro_falso'?'selected':''}>Verdadeiro/Falso</option>
+            </select>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${currentIndex})">🗑 Deletar</button>
+        </div>
+
+        <!-- ── IMPORTAR JSON (dentro do editor) ── -->
+        <div class="import-section">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <span class="import-section-title">📥 Importar JSON</span>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFormatGuide()" id="btn-format-guide">
+              📖 Ver formato esperado
+            </button>
+          </div>
+          <div class="format-guide" id="format-guide">
+            <h4>Por que JSON?</h4>
+            <p>O formato JSON permite criar e editar questões em massa fora do editor (num editor de texto, planilha, ou script), e depois importar tudo de uma vez. É simples, legível e compatível com qualquer sistema.</p>
+
+            <h4>Estrutura básica (sem imagem)</h4>
+            <pre>[
+  {
+    "enunciado": "Qual é a capital do Brasil?",
+    "type": "multipla",
+    "difficulty": "fácil",
+    "subject": "Geografia",
+    "tags": ["capitais", "brasil"],
+    "alternatives": [
+      { "text": "São Paulo", "correct": false },
+      { "text": "Brasília",  "correct": true  },
+      { "text": "Rio de Janeiro", "correct": false }
+    ],
+    "explanation": "Brasília é a capital federal desde 1960.",
+    "panelColor": "#4fffb0"
+  }
+]</pre>
+
+            <h4>Com imagem (base64 ou URL)</h4>
+            <p>O campo <code>image</code> aceita uma URL pública ou uma string base64 (ex.: <code>"data:image/png;base64,..."</code>). O campo <code>imageCaption</code> é a legenda opcional.</p>
+            <pre>{
+  "image": "https://exemplo.com/figura.png",
+  "imageCaption": "Figura 1 — Diagrama do processo"
+}</pre>
+
+            <h4>Diagrama (Mermaid)</h4>
+            <p>Use o campo <code>diagram</code> com código <a href="https://mermaid.js.org" target="_blank" style="color:var(--accent3)">Mermaid</a>. O diagrama é renderizado automaticamente no preview.</p>
+            <pre>{
+  "diagram": "graph TD\\n  A[Início] --> B{Condição?}\\n  B -->|Sim| C[Resultado A]\\n  B -->|Não| D[Resultado B]"
+}</pre>
+
+            <h4>Tabela</h4>
+            <pre>{
+  "table": {
+    "headers": ["Elemento", "Símbolo", "Número Atômico"],
+    "rows": [
+      ["Hidrogênio", "H", "1"],
+      ["Oxigênio",   "O", "8"]
+    ]
+  }
+}</pre>
+
+            <h4>Tipos de questão</h4>
+            <p><code>"type"</code> pode ser: <code>"multipla"</code>, <code>"dissertativa"</code>, ou <code>"verdadeiro_falso"</code>. Para dissertativa, use <code>"dissertativa_gabarito"</code> em vez de <code>"alternatives"</code>.</p>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="file" accept=".json" id="import-file-inline" style="display:none" onchange="handleJSONFileInline(this)" />
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file-inline').click()">📂 Escolher arquivo .json</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('import')">⬆ Importar via texto/colar</button>
+          </div>
+        </div>
+
+        <!-- ── ENUNCIADO ── -->
+        <div class="section-card" id="section-enunciado">
+          <div class="section-card-header" onclick="toggleSection('section-enunciado')">
+            <span class="section-label" style="margin:0">📝 Enunciado</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body">
+            <div class="rich-toolbar">
+              <button class="tool-btn" onclick="wrapText('**','**','q-enunciado')" title="Negrito"><b>B</b></button>
+              <button class="tool-btn" onclick="wrapText('*','*','q-enunciado')" title="Itálico"><i>I</i></button>
+              <button class="tool-btn" onclick="wrapText('\`','\`','q-enunciado')" title="Código">{ }</button>
+              <div class="sep"></div>
+              <button class="tool-btn" onclick="insertText('→ ','q-enunciado')">→</button>
+              <button class="tool-btn" onclick="insertText('• ','q-enunciado')">•</button>
+              <button class="tool-btn" onclick="insertText('\\n','q-enunciado')">↵</button>
+              <div class="sep"></div>
+              <button class="tool-btn" onclick="insertFormula('q-enunciado')">∑ Fórmula</button>
+            </div>
+            <textarea class="rich-textarea" id="q-enunciado"
+              placeholder="Digite o enunciado da questão aqui..."
+              oninput="livePreview()">${q.enunciado}</textarea>
+          </div>
+        </div>
+
+        <!-- ── IMAGEM ── -->
+        <div class="section-card" id="section-img">
+          <div class="section-card-header" onclick="toggleSection('section-img')">
+            <span class="section-label" style="margin:0">🖼 Imagem</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body">
+            <div class="image-drop-zone ${q.image ? 'has-image' : ''}" id="img-drop"
+              onclick="document.getElementById('img-file').click()">
+              ${q.image
+                ? `<img src="${q.image}" id="preview-img-thumb" />`
+                : `<div class="drop-hint"><span>🖼️</span>Clique ou arraste uma imagem</div>`}
+              <input type="file" id="img-file" accept="image/*" style="display:none"
+                onchange="handleImageUpload(this)" />
+            </div>
+            ${q.image ? `
+              <div style="display:flex;gap:8px;align-items:center;margin-top:2px;flex-wrap:wrap">
+                <input type="text" id="q-img-caption" value="${q.imageCaption}"
+                  placeholder="Legenda da imagem (opcional)" oninput="livePreview()" style="flex:1;min-width:120px" />
+                <button class="btn btn-danger btn-sm" onclick="removeImage()">✕ Remover</button>
+              </div>` : ''}
+          </div>
+        </div>
+
+        <!-- ── TABELA ── -->
+        <div class="section-card" id="section-table">
+          <div class="section-card-header" onclick="toggleSection('section-table')">
+            <span class="section-label" style="margin:0">📊 Tabela</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body" id="table-section-body">
+            ${renderTableEditor(q)}
+          </div>
+        </div>
+
+        <!-- ── DIAGRAMA MERMAID ── -->
+        <div class="section-card" id="section-diagram">
+          <div class="section-card-header" onclick="toggleSection('section-diagram')">
+            <span class="section-label" style="margin:0">🔀 Diagrama (Mermaid)</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body">
+            <div class="mermaid-editor">
+              <div>
+                <div class="section-label">Código Mermaid</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+                  <button class="btn btn-ghost btn-sm" onclick="insertDiagramTemplate('flowchart')">Fluxograma</button>
+                  <button class="btn btn-ghost btn-sm" onclick="insertDiagramTemplate('sequence')">Sequência</button>
+                  <button class="btn btn-ghost btn-sm" onclick="insertDiagramTemplate('pie')">Pizza</button>
+                  <button class="btn btn-ghost btn-sm" onclick="insertDiagramTemplate('mindmap')">Mapa Mental</button>
+                </div>
+                <textarea id="q-diagram" placeholder="graph TD&#10;  A[Início] --> B[Processo]&#10;  B --> C[Fim]"
+                  oninput="scheduleMermaidPreview()" style="min-height:100px;font-family:var(--font-mono);font-size:0.78rem">${q.diagram || ''}</textarea>
+              </div>
+              <div>
+                <div class="section-label">Preview</div>
+                <div class="mermaid-preview" id="mermaid-preview">
+                  <span style="color:var(--muted);font-size:0.75rem">Digite o código acima →</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ALTERNATIVAS ── -->
+        <div class="section-card" id="section-alts">
+          <div class="section-card-header" onclick="toggleSection('section-alts')">
+            <span class="section-label" style="margin:0">🔘 Alternativas</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body">
+            <div class="alternatives-list" id="alt-list">
+              ${renderAlternatives(q)}
+            </div>
+            ${q.type === 'multipla' ? `
+              <button class="btn btn-ghost btn-sm" onclick="addAlternative()" style="margin-top:4px">+ Alternativa</button>
+            ` : ''}
+            ${q.type === 'dissertativa' ? `
+              <div class="field-group">
+                <div class="section-label">Gabarito / Resposta esperada</div>
+                <textarea id="q-dissertativa" oninput="livePreview()"
+                  placeholder="Descreva a resposta esperada...">${q.dissertativa_gabarito}</textarea>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- ── APARÊNCIA ── -->
+        <div class="section-card" id="section-appearance">
+          <div class="section-card-header" onclick="toggleSection('section-appearance')">
+            <span class="section-label" style="margin:0">🎨 Aparência do Painel</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body">
+            <div class="section-label">Cor de destaque</div>
+            <div class="panel-color-row" id="color-swatches">
+              ${PRESET_COLORS.map(c => `
+                <div class="color-swatch ${q.panelColor===c?'selected':''}"
+                  style="background:${c}" onclick="setPanelColor('${c}')" title="${c}"></div>
+              `).join('')}
+              <input type="color" value="${q.panelColor}" oninput="setPanelColor(this.value)"
+                title="Cor personalizada" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── METADADOS ── -->
+        <div class="section-card" id="section-meta">
+          <div class="section-card-header" onclick="toggleSection('section-meta')">
+            <span class="section-label" style="margin:0">🏷 Metadados</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-card-body">
+            <div class="meta-row">
+              <div class="field-group">
+                <div class="section-label">Disciplina / Assunto</div>
+                <input type="text" id="q-subject" value="${q.subject}"
+                  placeholder="ex: Biologia – Genética" oninput="livePreview()" />
+              </div>
+              <div class="field-group">
+                <div class="section-label">Dificuldade</div>
+                <div class="diff-btns">
+                  ${['fácil','médio','difícil'].map(d => `
+                    <button class="diff-btn ${q.difficulty===d?'active':''}" data-d="${d}"
+                      onclick="setDifficulty('${d}')">${d}</button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="section-label">Tags</div>
+              <div class="tags-wrap" id="tags-wrap" onclick="document.getElementById('tag-input').focus()">
+                ${q.tags.map((t,i) => `
+                  <span class="tag">${t}
+                    <button onclick="removeTag(${i})">✕</button>
+                  </span>`).join('')}
+                <input class="tag-input" id="tag-input" placeholder="Adicionar tag..."
+                  onkeydown="handleTagInput(event)" />
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="section-label">Explicação / Comentário do gabarito</div>
+              <textarea id="q-explanation" oninput="livePreview()"
+                placeholder="Explique a resposta correta aqui...">${q.explanation}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (q.diagram) scheduleMermaidPreview(0);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       GUIA DE FORMATO
+    ════════════════════════════════════════════════════════ */
+    function toggleFormatGuide() {
+      const guide = document.getElementById('format-guide');
+      const btn = document.getElementById('btn-format-guide');
+      if (!guide) return;
+      guide.classList.toggle('open');
+      btn.textContent = guide.classList.contains('open') ? '✕ Fechar guia' : '📖 Ver formato esperado';
+    }
+
+    /* ════════════════════════════════════════════════════════
+       RENDER ALTERNATIVAS
+    ════════════════════════════════════════════════════════ */
+    function renderAlternatives(q) {
+      const labels = 'ABCDEFGHIJKLMNOP';
+      if (q.type === 'verdadeiro_falso') {
+        return ['Verdadeiro','Falso'].map((opt, i) => `
+          <div class="alt-row">
+            <div class="alt-label ${q.alternatives[i]?.correct ? 'correct' : ''}">${labels[i]}</div>
+            <input type="text" class="alt-text-input" value="${opt}" readonly style="background:var(--surface)" />
+            <button class="mark-correct-btn ${q.alternatives[i]?.correct ? 'active' : ''}"
+              onclick="markCorrect(${i})">✓ Correta</button>
+            <span></span>
+          </div>
+        `).join('');
+      }
+
+      return (q.alternatives || []).map((alt, i) => `
+        <div class="alt-row" data-alt="${i}">
+          <div class="alt-label ${alt.correct ? 'correct' : ''}" id="alt-label-${i}">${labels[i]}</div>
+          <input type="text" class="alt-text-input" value="${alt.text}"
+            placeholder="Texto da alternativa ${labels[i]}"
+            oninput="onAltTextChange(${i}, this.value)" />
+          <button class="mark-correct-btn ${alt.correct ? 'active' : ''}"
+            onclick="markCorrect(${i})">✓ Correta</button>
+          <button class="remove-alt-btn" onclick="removeAlternative(${i})">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function onTypeChange(val) {
+      saveCurrentToState();
+      questions[currentIndex].type = val;
+      if (val === 'verdadeiro_falso') {
+        questions[currentIndex].alternatives = [
+          { text: 'Verdadeiro', correct: false },
+          { text: 'Falso', correct: false }
+        ];
+      } else if (val === 'multipla' && questions[currentIndex].alternatives.length < 2) {
+        questions[currentIndex].alternatives = [
+          { text: '', correct: false },
+          { text: '', correct: false },
+          { text: '', correct: false },
+          { text: '', correct: false }
+        ];
+      }
+      renderEditor();
+      renderPreview();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       TABELA EDITOR
+    ════════════════════════════════════════════════════════ */
+    function renderTableEditor(q) {
+      if (!q.table) {
+        return `<button class="btn btn-ghost btn-sm" onclick="initTable()">+ Criar Tabela</button>`;
+      }
+      const { headers, rows } = q.table;
+      return `
+        <div class="table-editor-wrap">
+          <table class="table-editor">
+            <thead><tr>
+              ${headers.map((h,ci) => `<th><input type="text" value="${h}"
+                onchange="updateTableHeader(${ci},this.value)" placeholder="Col ${ci+1}" /></th>`).join('')}
+              <th style="width:30px"></th>
+            </tr></thead>
+            <tbody id="table-body">
+              ${rows.map((row,ri) => `<tr>
+                ${row.map((cell,ci) => `<td><input type="text" value="${cell}"
+                  onchange="updateTableCell(${ri},${ci},this.value)" /></td>`).join('')}
+                <td><button class="remove-alt-btn" onclick="removeTableRow(${ri})">✕</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="table-controls">
+          <button class="btn btn-ghost btn-sm" onclick="addTableRow()">+ Linha</button>
+          <button class="btn btn-ghost btn-sm" onclick="addTableCol()">+ Coluna</button>
+          <button class="btn btn-danger btn-sm" onclick="clearTable()">Remover Tabela</button>
+        </div>
+      `;
+    }
+
+    function initTable() {
+      questions[currentIndex].table = {
+        headers: ['Coluna 1', 'Coluna 2', 'Coluna 3'],
+        rows: [['', '', ''], ['', '', '']]
+      };
+      document.getElementById('table-section-body').innerHTML = renderTableEditor(questions[currentIndex]);
+      livePreview();
+    }
+
+    function clearTable() {
+      questions[currentIndex].table = null;
+      document.getElementById('table-section-body').innerHTML = renderTableEditor(questions[currentIndex]);
+      livePreview();
+    }
+
+    function updateTableHeader(ci, val) { questions[currentIndex].table.headers[ci] = val; livePreview(); }
+    function updateTableCell(ri, ci, val) { questions[currentIndex].table.rows[ri][ci] = val; livePreview(); }
+
+    function addTableRow() {
+      const t = questions[currentIndex].table;
+      t.rows.push(t.headers.map(() => ''));
+      document.getElementById('table-section-body').innerHTML = renderTableEditor(questions[currentIndex]);
+    }
+
+    function addTableCol() {
+      const t = questions[currentIndex].table;
+      t.headers.push(`Col ${t.headers.length + 1}`);
+      t.rows.forEach(r => r.push(''));
+      document.getElementById('table-section-body').innerHTML = renderTableEditor(questions[currentIndex]);
+    }
+
+    function removeTableRow(ri) {
+      questions[currentIndex].table.rows.splice(ri, 1);
+      document.getElementById('table-section-body').innerHTML = renderTableEditor(questions[currentIndex]);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       ALTERNATIVAS — INTERAÇÕES
+    ════════════════════════════════════════════════════════ */
+    function markCorrect(i) {
+      const q = questions[currentIndex];
+      q.alternatives.forEach((a, idx) => a.correct = idx === i);
+      document.querySelectorAll('.alt-label').forEach((el, idx) => {
+        el.classList.toggle('correct', idx === i);
+      });
+      document.querySelectorAll('.mark-correct-btn').forEach((el, idx) => {
+        el.classList.toggle('active', idx === i);
+      });
+      livePreview();
+    }
+
+    function onAltTextChange(i, val) {
+      if (questions[currentIndex].alternatives[i]) {
+        questions[currentIndex].alternatives[i].text = val;
+      }
+      livePreview();
+    }
+
+    function addAlternative() {
+      const q = questions[currentIndex];
+      if (q.alternatives.length >= 8) return toast('Máximo de 8 alternativas');
+      q.alternatives.push({ text: '', correct: false });
+      document.getElementById('alt-list').innerHTML = renderAlternatives(q);
+    }
+
+    function removeAlternative(i) {
+      const q = questions[currentIndex];
+      if (q.alternatives.length <= 2) return toast('Mínimo de 2 alternativas');
+      q.alternatives.splice(i, 1);
+      document.getElementById('alt-list').innerHTML = renderAlternatives(q);
+      livePreview();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       IMAGEM
+    ════════════════════════════════════════════════════════ */
+    function handleImageUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        questions[currentIndex].image = e.target.result;
+        renderEditor();
+        livePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeImage() {
+      questions[currentIndex].image = null;
+      questions[currentIndex].imageCaption = '';
+      renderEditor();
+      livePreview();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       COR DO PAINEL
+    ════════════════════════════════════════════════════════ */
+    function setPanelColor(color) {
+      questions[currentIndex].panelColor = color;
+      document.querySelectorAll('.color-swatch').forEach(sw => {
+        sw.classList.toggle('selected', sw.style.background === color || sw.style.backgroundColor === color);
+      });
+      livePreview();
+      renderSidebar();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       DIFICULDADE
+    ════════════════════════════════════════════════════════ */
+    function setDifficulty(d) {
+      questions[currentIndex].difficulty = d;
+      document.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.d === d);
+      });
+    }
+
+    /* ════════════════════════════════════════════════════════
+       TAGS
+    ════════════════════════════════════════════════════════ */
+    function handleTagInput(e) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = e.target.value.trim().replace(',', '');
+        if (!val) return;
+        questions[currentIndex].tags.push(val);
+        e.target.value = '';
+        const wrap = document.getElementById('tags-wrap');
+        const span = document.createElement('span');
+        span.className = 'tag';
+        const idx = questions[currentIndex].tags.length - 1;
+        span.innerHTML = `${val}<button onclick="removeTag(${idx})">✕</button>`;
+        wrap.insertBefore(span, e.target);
+      }
+    }
+
+    function removeTag(i) {
+      questions[currentIndex].tags.splice(i, 1);
+      const wrap = document.getElementById('tags-wrap');
+      const tags = wrap.querySelectorAll('.tag');
+      if (tags[i]) tags[i].remove();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       RICH TEXT HELPERS
+    ════════════════════════════════════════════════════════ */
+    function wrapText(before, after, id) {
+      const ta = document.getElementById(id);
+      if (!ta) return;
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const selected = ta.value.slice(s, e) || 'texto';
+      ta.value = ta.value.slice(0,s) + before + selected + after + ta.value.slice(e);
+      ta.focus();
+      livePreview();
+    }
+
+    function insertText(txt, id) {
+      const ta = document.getElementById(id);
+      if (!ta) return;
+      const s = ta.selectionStart;
+      ta.value = ta.value.slice(0,s) + txt + ta.value.slice(s);
+      ta.setSelectionRange(s + txt.length, s + txt.length);
+      ta.focus();
+      livePreview();
+    }
+
+    function insertFormula(id) { insertText(' $formula$ ', id); }
+
+    /* ════════════════════════════════════════════════════════
+       MERMAID DIAGRAM
+    ════════════════════════════════════════════════════════ */
+    const DIAGRAM_TEMPLATES = {
+      flowchart: `graph TD\n  A[Início] --> B{Decisão?}\n  B -->|Sim| C[Resultado A]\n  B -->|Não| D[Resultado B]`,
+      sequence:  `sequenceDiagram\n  participant A as Aluno\n  participant P as Professor\n  A->>P: Pergunta\n  P-->>A: Responde`,
+      pie:       `pie title Distribuição\n  "Categoria A" : 40\n  "Categoria B" : 30\n  "Categoria C" : 30`,
+      mindmap:   `mindmap\n  root((Tema Central))\n    Subtema 1\n      Detalhe A\n      Detalhe B\n    Subtema 2\n      Detalhe C`
+    };
+
+    function insertDiagramTemplate(type) {
+      const ta = document.getElementById('q-diagram');
+      if (!ta) return;
+      ta.value = DIAGRAM_TEMPLATES[type] || '';
+      questions[currentIndex].diagram = ta.value;
+      scheduleMermaidPreview(0);
+    }
+
+    function scheduleMermaidPreview(delay = 600) {
+      if (mermaidTimer) clearTimeout(mermaidTimer);
+      mermaidTimer = setTimeout(async () => {
+        const ta = document.getElementById('q-diagram');
+        const prev = document.getElementById('mermaid-preview');
+        if (!ta || !prev) return;
+        const code = ta.value.trim();
+        questions[currentIndex].diagram = code;
+        if (!code) { prev.innerHTML = '<span style="color:var(--muted);font-size:0.75rem">Digite o código acima →</span>'; return; }
+        try {
+          const id = 'mmd-' + Date.now();
+          const { svg } = await mermaid.render(id, code);
+          prev.innerHTML = svg;
+        } catch(e) {
+          prev.innerHTML = `<span style="color:var(--accent2);font-size:0.72rem">Erro: ${e.message?.slice(0,80)}</span>`;
+        }
+      }, delay);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       COLLAPSIBLE SECTIONS
+    ════════════════════════════════════════════════════════ */
+    function toggleSection(id) {
+      const card = document.getElementById(id);
+      const header = card.querySelector('.section-card-header');
+      const body = card.querySelector('.section-card-body');
+      header.classList.toggle('collapsed-header');
+      body.classList.toggle('collapsed');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       PREVIEW AO VIVO
+    ════════════════════════════════════════════════════════ */
+    function livePreview() {
+      if (currentIndex < 0) return;
+      const q = questions[currentIndex];
+
+      const enunciado = document.getElementById('q-enunciado')?.value ?? q.enunciado;
+      const caption   = document.getElementById('q-img-caption')?.value ?? q.imageCaption;
+      const subject   = document.getElementById('q-subject')?.value ?? q.subject;
+      const panelColor = q.panelColor;
+      const labels = 'ABCDEFGHIJKLMNOP';
+      const type = document.getElementById('q-type')?.value ?? q.type;
+
+      const altTexts = [...document.querySelectorAll('.alt-text-input')].map(i => i.value);
+      const alts = q.alternatives.map((a, i) => ({ ...a, text: altTexts[i] ?? a.text }));
+
+      // Atualiza o conteúdo do preview se a tab estiver ativa, ou apenas armazena
+      const previewContent = document.getElementById('preview-content');
+      if (!previewContent) return;
+
+      const diffColors = { fácil: '#22c55e', médio: '#f59e0b', difícil: '#ff6b6b' };
+
+      previewContent.innerHTML = `
+        <div class="preview-type-row">
+          <span class="questions-title">Preview da Questão ${currentIndex + 1}</span>
+          <span class="preview-type-badge">${type}</span>
+        </div>
+        <div class="preview-card">
+          <div class="preview-card-accent" style="background:${panelColor}"></div>
+          <div class="preview-card-top">
+            <span style="font-size:0.7rem;color:var(--muted);font-family:var(--font-mono)">
+              Q${currentIndex + 1}${subject ? ' · ' + subject : ''}
+            </span>
+            <span style="font-size:0.7rem;color:${diffColors[q.difficulty] || 'var(--muted)'}">
+              ${q.difficulty}
+            </span>
+          </div>
+          <div class="preview-card-body">
+            ${q.image ? `<img src="${q.image}" class="preview-img" />${caption ? `<p style="font-size:0.7rem;color:var(--muted);margin-bottom:10px">${caption}</p>` : ''}` : ''}
+            <div class="preview-q-text">${enunciado || '<span style="color:var(--muted);font-style:italic">Sem enunciado</span>'}</div>
+
+            ${q.table ? `
+              <div style="overflow-x:auto;margin-bottom:12px">
+                <table style="border-collapse:collapse;width:100%;font-size:0.78rem">
+                  <thead><tr>${q.table.headers.map(h=>`<th style="border:1px solid var(--border);padding:6px 10px;background:var(--surface)">${h}</th>`).join('')}</tr></thead>
+                  <tbody>${q.table.rows.map(r=>`<tr>${r.map(c=>`<td style="border:1px solid var(--border);padding:6px 10px">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+                </table>
+              </div>
+            ` : ''}
+
+            ${type === 'multipla' || type === 'verdadeiro_falso' ? alts.map((alt, i) => `
+              <div class="preview-alt ${alt.correct ? 'correct-alt' : ''}">
+                <div class="preview-alt-letter" style="${alt.correct?`background:${panelColor};color:#000`:''}">${labels[i]}</div>
+                <span>${alt.text || `<em style="color:var(--muted)">Alternativa ${labels[i]}</em>`}</span>
+              </div>
+            `).join('') : `
+              <div style="background:var(--bg);border:1px dashed var(--border);border-radius:6px;padding:12px;font-size:0.82rem;color:var(--muted)">
+                Resposta dissertativa
+              </div>
+            `}
+
+            ${q.tags.length ? `
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:12px">
+                ${q.tags.map(t=>`<span style="background:var(--border);border-radius:4px;padding:2px 7px;font-size:0.68rem;color:var(--muted)">${t}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPreview() {
+      if (currentIndex < 0) {
+        const previewContent = document.getElementById('preview-content');
+        if (previewContent) previewContent.innerHTML = `
+          <div class="preview-empty">
+            <div class="big-icon">👁️</div>
+            <h3>Preview ao vivo</h3>
+            <p>O card aparece aqui enquanto você edita.</p>
+          </div>`;
+        return;
+      }
+      livePreview();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       IMPORT JSON — arquivo inline (no editor)
+    ════════════════════════════════════════════════════════ */
+    function handleJSONFileInline(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed)) { toast('O JSON deve ser um array de questões'); return; }
+          if (confirm(`Importar ${parsed.length} questão(ões)?\nIsso irá substituir as questões atuais.\nPara mesclar, use "Importar via texto".`)) {
+            questions = parsed;
+            currentIndex = questions.length > 0 ? 0 : -1;
+            renderSidebar();
+            renderEditor();
+            renderPreview();
+            toast(`${parsed.length} questões importadas!`);
+          }
+        } catch(err) {
+          toast('JSON inválido: ' + err.message);
+        }
+        input.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       MODAL IMPORTAR/EXPORTAR
+    ════════════════════════════════════════════════════════ */
+    function openModal(mode) {
+      const overlay = document.getElementById('modal-overlay');
+      const title   = document.getElementById('modal-title');
+      const body    = document.getElementById('modal-body');
+      const footer  = document.getElementById('modal-footer');
+
+      if (mode === 'export') {
+        saveCurrentToState();
+        const json = JSON.stringify(questions, null, 2);
+        title.textContent = 'Exportar JSON';
+        body.innerHTML = `
+          <p style="font-size:0.82rem;color:var(--muted)">${questions.length} questões · ${(new Blob([json]).size/1024).toFixed(1)} KB</p>
+          <div class="code-area">${escHtml(json.slice(0, 2000))}${json.length > 2000 ? '\n...' : ''}</div>
+        `;
+        footer.innerHTML = `
+          <button class="btn btn-ghost" onclick="closeModal()">Fechar</button>
+          <button class="btn btn-primary" onclick="downloadJSON()">⬇ Baixar .json</button>
+          <button class="btn btn-ghost" onclick="copyJSON()">📋 Copiar</button>
+        `;
+      } else {
+        title.textContent = 'Importar JSON';
+        body.innerHTML = `
+          <p style="font-size:0.82rem;color:var(--muted)">Cole o JSON abaixo ou selecione um arquivo.</p>
+          <input type="file" accept=".json" onchange="handleJSONFileModal(this)"
+            style="font-size:0.8rem;color:var(--text)" />
+          <textarea id="import-json" style="min-height:200px;font-family:var(--font-mono);font-size:0.75rem"
+            placeholder='[{"enunciado":"...", "type":"multipla", ...}]'></textarea>
+          <p style="font-size:0.75rem;color:var(--muted)">
+            ⚠ Importar irá <strong>substituir</strong> as questões atuais.
+            Ative a opção abaixo para mesclar.
+          </p>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;cursor:pointer">
+            <input type="checkbox" id="import-merge" style="width:auto" />
+            Mesclar com as questões existentes
+          </label>
+        `;
+        footer.innerHTML = `
+          <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" onclick="doImport()">⬆ Importar</button>
+        `;
+      }
+
+      overlay.classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function downloadJSON() {
+      saveCurrentToState();
+      const blob = new Blob([JSON.stringify(questions, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `quiz-${Date.now()}.json`;
+      a.click();
+      toast('Download iniciado!');
+    }
+
+    function copyJSON() {
+      saveCurrentToState();
+      navigator.clipboard.writeText(JSON.stringify(questions, null, 2));
+      toast('JSON copiado!');
+    }
+
+    function handleJSONFileModal(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('import-json').value = e.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    function doImport() {
+      const raw = document.getElementById('import-json').value.trim();
+      if (!raw) { toast('Cole ou carregue um JSON primeiro'); return; }
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch(e) { toast('JSON inválido: ' + e.message); return; }
+      if (!Array.isArray(parsed)) { toast('O JSON deve ser um array de questões'); return; }
+      const merge = document.getElementById('import-merge')?.checked;
+      questions = merge ? [...questions, ...parsed] : parsed;
+      currentIndex = questions.length > 0 ? 0 : -1;
+      closeModal();
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+      toast(`${parsed.length} questões importadas${merge ? ' e mescladas' : ''}!`);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       TOAST
+    ════════════════════════════════════════════════════════ */
+    let toastTimer;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       UTILS
+    ════════════════════════════════════════════════════════ */
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+        /* ════════════════════════════════════════════════════════
+       UNDO / REDO  —  FIX #8.2
+       Pilha de estados em memória — nunca vai ao banco.
+    ════════════════════════════════════════════════════════ */
+    const undoStack = [];
+    const redoStack = [];
+    const MAX_HISTORICO = 50;
+
+    function capturarEstado() {
+      return JSON.parse(JSON.stringify(questions));
+    }
+
+    /** Chamar ANTES de qualquer mutação que o usuário possa querer desfazer */
+    function pushUndo() {
+      undoStack.push(capturarEstado());
+      if (undoStack.length > MAX_HISTORICO) undoStack.shift();
+      redoStack.length = 0; // nova ação limpa o redo
+    }
+
+    function undo() {
+      if (!undoStack.length) return toast('Nada para desfazer');
+      redoStack.push(capturarEstado());
+      const estado = undoStack.pop();
+      aplicarEstado(estado);
+    }
+
+    function redo() {
+      if (!redoStack.length) return toast('Nada para refazer');
+      undoStack.push(capturarEstado());
+      const estado = redoStack.pop();
+      aplicarEstado(estado);
+    }
+
+    function aplicarEstado(estado) {
+      questions = estado;
+      if (currentIndex >= questions.length) currentIndex = questions.length - 1;
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+    }
+
+    // Interceptar pushUndo nas mutações principais
+    const _addQuestion_orig = window.addQuestion;
+    // será sobrescrito abaixo junto do init
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    });
+
+    /* ════════════════════════════════════════════════════════
+       AUTO-SAVE (localStorage — apenas backup local de sessão)
+    ════════════════════════════════════════════════════════ */
+    function autosave() {
+      saveCurrentToState();
+      try {
+        localStorage.setItem('quiz-editor-questions', JSON.stringify(questions));
+        localStorage.setItem('quiz-editor-index', currentIndex);
+      } catch(e) { /* quota exceeded */ }
+    }
+
+    function loadFromStorage() {
+      try {
+        const saved = localStorage.getItem('quiz-editor-questions');
+        if (saved) {
+          questions = JSON.parse(saved);
+          currentIndex = parseInt(localStorage.getItem('quiz-editor-index') || '0', 10);
+          if (currentIndex >= questions.length) currentIndex = 0;
+        }
+      } catch(e) { questions = []; currentIndex = -1; }
+    }
+
+    window.addEventListener('beforeunload', autosave);
+    setInterval(autosave, 30000);
+
+    /* ════════════════════════════════════════════════════════
+       INTEGRAÇÃO COM SUPABASE  —  FIX #8.1
+       O editor v2 recebe o simulado_id pelo query string (?sim=ID)
+       e carrega/salva questões diretamente no banco.
+    ════════════════════════════════════════════════════════ */
+    // Importar o cliente Supabase (versão ESM via CDN)
+    // Mesmo URL + anon key do main.js — valores públicos seguros para o frontend.
+    let sb = null; // será inicializado após a página carregar
+
+    const SUPABASE_URL  = 'https://naxivfgaomwmbkiypysa.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_wzqtvbMtrScPNHRumTBCcA_eQ5sY3K6';
+
+    const params    = new URLSearchParams(window.location.search);
+    const simuladoId = params.get('sim');  // null se acessado fora do fluxo do main.js
+    let   simNome    = '';
+
+    /** Inicializa o cliente Supabase e carrega as questões do banco (se sim_id presente) */
+    async function iniciarEditor() {
+      // Importação dinâmica do ESM — funciona sem bundler
+      const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm');
+      sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+      if (!simuladoId) {
+        // Modo standalone: carrega do localStorage (comportamento original)
+        loadFromStorage();
+        renderSidebar(); renderEditor(); renderPreview();
+        updateHeaderStatus('Modo local (sem sim_id na URL)');
+        return;
+      }
+
+      // Verificar sessão ativa — redireciona ao index se não autenticado
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = '/'; return; }
+
+      // Carregar nome do simulado
+      const { data: sim } = await sb.from('simulados').select('nome, status').eq('id', simuladoId).single();
+      if (!sim) { toast('Simulado não encontrado'); window.location.href = '/'; return; }
+      simNome = sim.nome;
+      document.title = `Editor — ${sim.nome}`;
+      document.querySelector('.logo-text')?.textContent && (document.querySelector('.logo-text').textContent = sim.nome);
+
+      // Carregar questões do banco (com gabarito — editor é área protegida por RLS)
+      const { data: questoesBanco } = await sb
+        .from('questoes')
+        .select('*')
+        .eq('simulado_id', simuladoId)
+        .order('ordem');
+
+      // Converter formato do banco → formato interno do editor v2
+      questions = (questoesBanco || []).map(q => ({
+        id:           q.id,          // preservar ID para UPDATEs
+        enunciado:    q.enunciado || '',
+        type:         'multipla',
+        alternatives: (q.alternativas || []).map((alt, i) => ({
+          text:    alt,
+          correct: i === q.correta,
+        })),
+        image:        (q.imagens || [])[0] || null,
+        imageCaption: '',
+        panelColor:   '#4fffb0',
+        difficulty:   'médio',
+        subject:      '',
+        tags:         [],
+        diagram:      null,
+        table:        null,
+        _ordem:       q.ordem,
+      }));
+
+      currentIndex = questions.length > 0 ? 0 : -1;
+      renderSidebar(); renderEditor(); renderPreview();
+      updateHeaderStatus(sim.status === 'rascunho' ? '🟡 Rascunho' : '🟢 Publicado');
+    }
+
+    function updateHeaderStatus(texto) {
+      const el = document.getElementById('sim-status-badge');
+      if (el) el.textContent = texto;
+    }
+
+    /** Salva a questão atual no banco (INSERT ou UPDATE conforme existência de q.id) */
+    async function salvarQuestaoNoBanco() {
+      if (!sb || !simuladoId) { toast('Modo local — use Exportar JSON para salvar'); return; }
+      saveCurrentToState();
+      const q = questions[currentIndex];
+      if (!q) return;
+
+      const alternativas = q.alternatives.map(a => a.text);
+      const correta      = q.alternatives.findIndex(a => a.correct);
+      if (correta < 0) { toast('Marque a alternativa correta antes de salvar', 'warn'); return; }
+
+      const payload = {
+        simulado_id:  simuladoId,
+        enunciado:    q.enunciado,
+        alternativas,
+        correta,
+        imagens:      q.image ? [q.image] : [],
+        ordem:        currentIndex + 1,
+      };
+
+      let error;
+      if (q.id) {
+        ({ error } = await sb.from('questoes').update(payload).eq('id', q.id));
+      } else {
+        const { data, error: e } = await sb.from('questoes').insert(payload).select('id').single();
+        if (data) questions[currentIndex].id = data.id; // persiste o ID gerado
+        error = e;
+      }
+
+      if (error) { toast('Erro ao salvar no banco: ' + error.message); return; }
+
+      // Atualizar total_questoes no simulado
+      await sb.from('simulados').update({ total_questoes: questions.length }).eq('id', simuladoId);
+      toast('✓ Questão salva no banco!');
+    }
+
+    /** Publicar: define status='publicado' + ativo=true */
+    async function publicarSimulado() {
+      if (!sb || !simuladoId) { toast('Sem conexão com o banco'); return; }
+      const { error } = await sb.from('simulados').update({ status: 'publicado', ativo: true }).eq('id', simuladoId);
+      if (error) { toast('Erro ao publicar: ' + error.message); return; }
+      toast('✅ Simulado publicado!');
+      updateHeaderStatus('🟢 Publicado');
+    }
+
+    /** Publicar como privado: status='publicado' + ativo=false
+     *  Não aparece para alunos nem conta nas estatísticas.
+     */
+    async function publicarPrivado() {
+      if (!sb || !simuladoId) { toast('Sem conexão com o banco'); return; }
+      const { error } = await sb.from('simulados').update({ status: 'publicado', ativo: false }).eq('id', simuladoId);
+      if (error) { toast('Erro: ' + error.message); return; }
+      toast('🔒 Publicado como privado (não visível para alunos)');
+      updateHeaderStatus('🔒 Privado');
+    }
+
+    /** Salvar como rascunho: status='rascunho' + ativo=false */
+    async function salvarRascunho() {
+      if (!sb || !simuladoId) { autosave(); toast('Salvo localmente'); return; }
+      await sb.from('simulados').update({ status: 'rascunho', ativo: false }).eq('id', simuladoId);
+      toast('💾 Rascunho salvo');
+      updateHeaderStatus('🟡 Rascunho');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       INICIALIZAÇÃO
+    ════════════════════════════════════════════════════════ */
+    iniciarEditor();
+</script>
+</body>
+</html>
