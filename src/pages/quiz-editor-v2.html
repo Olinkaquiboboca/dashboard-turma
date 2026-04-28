@@ -2322,11 +2322,11 @@
 
       // Verificar sessão ativa — redireciona ao index se não autenticado
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = '/'; return; }
+      if (!session) { window.location.href = '/dashboard-turma/index.html'; return; }
 
       // Carregar nome do simulado
       const { data: sim } = await sb.from('simulados').select('nome, status').eq('id', simuladoId).single();
-      if (!sim) { toast('Simulado não encontrado'); window.location.href = '/'; return; }
+      if (!sim) { toast('Simulado não encontrado'); window.location.href = '/dashboard/index.html'; return; }
       simNome = sim.nome;
       document.title = `Editor — ${sim.nome}`;
       document.querySelector('.logo-text')?.textContent && (document.querySelector('.logo-text').textContent = sim.nome);
