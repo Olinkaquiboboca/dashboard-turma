@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Turma 9ºE🌟</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄</text></svg>" />
+<!-- Google Fonts: Fraunces + Plus Jakarta Sans -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Estilos da aplicação -->
+<link rel="stylesheet" href="assets/css/style.css" />
+<!-- Carrossel de fundo — deve vir DEPOIS do style.css para poder sobrescrever backgrounds -->
+<link rel="stylesheet" href="assets/css/carousel-bg.css" />
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="tela-login">
+  <div class="login-card">
+    <div class="login-logo">🌟Turma 9ºE</div>
+    <div class="login-sub">Plataforma privada da turma</div>
+    <div id="banner-reset" class="reset-banner hidden">
+      <strong>Defina sua nova senha</strong>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:4px;">Você acessou via link de redefinição. Insira sua nova senha abaixo.</p>
+    </div>
+    <div class="form-group">
+      <label for="inp-apelido">Login</label>
+      <input id="inp-apelido" type="text" placeholder="seu login de acesso" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label for="inp-senha">Senha</label>
+      <input id="inp-senha" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="login-erro" id="login-erro"></div>
+    <button class="btn-primary" id="btn-entrar">Entrar</button>
+    <button id="btn-esqueci" style="background:transparent;border:none;color:var(--text-muted);font-size:13px;margin-top:14px;width:100%;text-align:center;cursor:pointer;">Esqueci minha senha</button>
+    <div id="form-nova-senha" class="hidden" style="margin-top:16px;">
+      <div class="form-group">
+        <label for="inp-nova-senha">Nova senha</label>
+        <input id="inp-nova-senha" type="password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" id="btn-salvar-nova-senha" style="margin-top:8px;">Salvar nova senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="header" class="hidden">
+  <div class="header-logo">Turma 9ºE🌑</div>
+  <nav class="header-nav" id="header-nav">
+    <button class="nav-btn" data-section="inicio">🏠 Início</button>
+    <button class="nav-btn" data-section="mural">📋 Mural</button>
+    <button class="nav-btn" data-section="conteudo">📚 Conteúdo</button>
+    <button class="nav-btn" data-section="simulados">🎯 Simulados</button>
+    <button class="nav-btn" data-section="materiais">📁 Materiais</button>
+  </nav>
+  <div class="header-right">
+    <div class="account-trigger" id="account-trigger">
+      <div class="avatar-sm" id="header-avatar"><span id="header-initials">?</span></div>
+      <span class="account-name" id="header-nome">—</span>
+    </div>
+    <div class="account-dropdown hidden" id="account-dropdown">
+      <div style="padding:10px 12px 8px;">
+        <div style="font-weight:700;font-size:14px;" id="dd-nome">—</div>
+        <div id="dd-role" style="margin-top:4px;"></div>
+      </div>
+      <div class="dropdown-sep"></div>
+      <button class="dropdown-item" id="dd-perfil">👤 Meu perfil</button>
+      <button class="dropdown-item" id="dd-senha">🔑 Mudar senha</button>
+      <div class="dropdown-sep"></div>
+      <button class="dropdown-item danger" id="dd-logout">🚪 Sair</button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN APP -->
+<main id="main-app" class="hidden">
+
+  <!-- INÍCIO -->
+  <section class="section" id="sec-inicio" data-section="inicio">
+    <div class="section-title">Bom estudo! 🎓</div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="panels-grid">
+      <div class="bloco-card">
+        <div class="panel-title">Atividade Recente</div>
+        <div id="panel-logs"><div class="empty-state"><div class="empty-icon">📋</div><p>Nenhuma atividade ainda.</p></div></div>
+      </div>
+      <div class="bloco-card">
+        <div class="panel-title">Simulados Disponíveis</div>
+        <div id="panel-sims"><div class="empty-state"><div class="empty-icon">🎯</div><p>Nenhum simulado disponível.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MURAL -->
+  <section class="section" id="sec-mural" data-section="mural">
+    <div id="mural-compose-area" class="hidden">
+      <div class="mural-compose">
+        <div class="compose-row">
+          <div class="avatar-md" id="compose-avatar"><span id="compose-initials">?</span></div>
+          <div class="compose-body">
+            <textarea class="compose-textarea" id="compose-texto" placeholder="Escreva um aviso para a turma…" rows="3"></textarea>
+            <div id="pending-images-preview" class="pending-images-preview"></div>
+            <div id="pending-links-list" class="pending-links-list"></div>
+          </div>
+        </div>
+        <div class="compose-footer">
+          <div class="compose-actions">
+            <button class="compose-action-btn" id="btn-add-imagem" title="Adicionar imagem">🖼️</button>
+            <button class="compose-action-btn" id="btn-add-link" title="Adicionar link">🔗</button>
+            <label style="cursor:pointer;">
+              <input type="checkbox" id="chk-fixado" style="display:inline;accent-color:var(--gold);width:auto;" />
+              <span style="font-size:12.5px;color:var(--text-muted);margin-left:5px;">📌 Fixar</span>
+            </label>
+          </div>
+          <button class="btn-primary btn-sm" id="btn-publicar">Publicar</button>
+        </div>
+      </div>
+    </div>
+    <div id="feed-mural"></div>
+    <div id="tela-thread">
+      <button class="thread-back-btn" id="btn-thread-back">← Voltar ao mural</button>
+      <div id="thread-post-container"></div>
+      <div class="thread-compose" id="thread-compose-area">
+        <div class="compose-row">
+          <div class="avatar-md" id="thread-compose-avatar"><span id="thread-compose-initials">?</span></div>
+          <div class="compose-body">
+            <textarea class="compose-textarea" id="thread-compose-texto" placeholder="Escreva um comentário…" rows="2"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn-primary btn-sm" id="btn-comentar">Comentar</button>
+        </div>
+      </div>
+      <div class="comments-list" id="comments-list"></div>
+    </div>
+  </section>
+
+  <!-- CONTEÚDO -->
+  <section class="section" id="sec-conteudo" data-section="conteudo">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;">Conteúdo</div>
+      <button class="btn-ghost btn-sm hidden" id="btn-novo-bloco">+ Novo bloco</button>
+    </div>
+    <nav class="abas-nav" id="abas-nav">
+      <button class="aba-btn active" data-aba="edital">📄 Edital</button>
+      <button class="aba-btn" data-aba="assuntos">📝 Assuntos</button>
+      <button class="aba-btn" data-aba="videos">🎬 Vídeos</button>
+      <button class="aba-btn" data-aba="materiais-aba">📎 Materiais</button>
+    </nav>
+    <div class="aba-content active" data-aba-content="edital"><div class="blocos-lista" id="blocos-edital"></div></div>
+    <div class="aba-content" data-aba-content="assuntos"><div class="blocos-lista" id="blocos-assuntos"></div></div>
+    <div class="aba-content" data-aba-content="videos"><div class="blocos-lista" id="blocos-videos"></div></div>
+    <div class="aba-content" data-aba-content="materiais-aba"><div class="blocos-lista" id="blocos-materiais-aba"></div></div>
+  </section>
+
+  <!-- SIMULADOS -->
+  <section class="section" id="sec-simulados" data-section="simulados">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;">Simulados 🎯</div>
+      <button class="btn-ghost btn-sm hidden" id="btn-novo-simulado">+ Novo simulado</button>
+    </div>
+    <div style="margin-bottom:22px;">
+      <div class="panel-title" style="margin-bottom:14px;">Por Matéria</div>
+      <div class="materias-grid" id="materias-grid"></div>
+      <div id="materia-sims-panel" class="materia-sims-panel hidden"></div>
+    </div>
+    <div>
+      <div class="panel-title" style="margin-bottom:14px;">Simulado Geral <span class="badge badge-geral">Geral</span></div>
+      <div class="simulados-lista" id="simulados-geral-lista"></div>
+    </div>
+  </section>
+
+  <!-- MATERIAIS -->
+  <section class="section" id="sec-materiais" data-section="materiais">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;">Materiais</div>
+      <button class="btn-ghost btn-sm hidden" id="btn-novo-material">+ Novo material</button>
+    </div>
+    <div class="materiais-grid" id="materiais-grid"></div>
+  </section>
+
+</main>
+
+<!-- TELA SIMULADO -->
+<div id="tela-simulado" class="hidden">
+  <div class="sim-header-bar">
+    <div class="sim-titulo" id="sim-titulo-bar">Simulado</div>
+    <div class="adv-pips" id="adv-pips">
+      <div class="adv-pip"></div><div class="adv-pip"></div><div class="adv-pip"></div>
+      <div class="adv-pip"></div><div class="adv-pip"></div>
+    </div>
+    <span id="sim-save-status" style="font-size:11px;color:var(--text-muted);"></span><div id="sim-progresso" style="font-size:13px;color:var(--text-muted);">0 respondidas</div>
+    <button class="btn-danger btn-sm" id="btn-entregar-sim">Entregar</button>
+  </div>
+  <div class="questoes-lista" id="questoes-lista"></div>
+  <div class="sim-footer">
+    <button class="btn-ghost" id="btn-sair-simulado">Sair sem entregar</button>
+    <button class="btn-primary" id="btn-entregar-sim-2">Entregar simulado</button>
+  </div>
+</div>
+
+<!-- TELA EDITOR DE SIMULADO -->
+<div id="tela-editor-simulado" class="hidden">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+    <button class="btn-ghost btn-sm" id="btn-voltar-editor">← Voltar</button>
+    <div class="section-title" style="margin-bottom:0;" id="editor-sim-titulo">Editor de Simulado</div>
+  </div>
+  <div class="editor-layout">
+    <div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn-primary btn-sm" id="btn-nova-questao">+ Questão</button>
+        <button class="btn-ghost btn-sm" id="btn-importar-json">↑ Importar JSON</button>
+        <input type="file" id="file-import-json" accept=".json" />
+      </div>
+      <div class="editor-questoes-lista" id="editor-questoes-lista"></div>
+    </div>
+    <div class="bloco-card" id="editor-questao-painel">
+      <div class="empty-state"><div class="empty-icon">✏️</div><p>Selecione ou crie uma questão para editar.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<nav id="mobile-nav" class="hidden">
+  <button class="mnav-btn" data-section="inicio"><span class="mnav-icon">🏠</span>Início</button>
+  <button class="mnav-btn" data-section="mural"><span class="mnav-icon">📋</span>Mural</button>
+  <button class="mnav-btn" data-section="conteudo"><span class="mnav-icon">📚</span>Conteúdo</button>
+  <button class="mnav-btn" data-section="simulados"><span class="mnav-icon">🎯</span>Simulados</button>
+  <button class="mnav-btn" data-section="materiais"><span class="mnav-icon">📁</span>Materiais</button>
+</nav>
+
+<!-- MODAIS -->
+<div class="modal-overlay hidden" id="modal-adv">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div class="adv-modal-icon" id="adv-modal-icon">⚠️</div>
+    <div class="modal-title" id="adv-modal-titulo">Advertência</div>
+    <div class="modal-sub" id="adv-modal-texto">Você trocou de aba ou ficou inativo.</div>
+    <div class="adv-modal-pips" id="adv-modal-pips"></div>
+    <div class="modal-footer" style="justify-content:center;">
+      <button class="btn-primary" id="btn-adv-ok" style="max-width:160px;">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-link">
+  <div class="modal">
+    <div class="modal-title">Adicionar link</div>
+    <div class="modal-sub">Informe o texto e a URL do link.</div>
+    <div class="link-inputs">
+      <div class="form-group" style="margin-bottom:0;"><label>Texto do link</label><input id="inp-link-texto" type="text" placeholder="Ex: Ver edital" /></div>
+      <div class="form-group" style="margin-bottom:0;"><label>URL</label><input id="inp-link-url" type="text" placeholder="https://..." /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-link-cancelar">Cancelar</button>
+      <button class="btn-primary" id="btn-link-confirmar" style="width:auto;">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-confirmar">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title" id="modal-confirmar-titulo">Confirmar</div>
+    <div class="modal-sub" id="modal-confirmar-texto">Tem certeza?</div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-confirmar-cancel">Cancelar</button>
+      <button class="btn-danger" id="btn-confirmar-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-bloco">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-title" id="modal-bloco-titulo">Novo bloco</div>
+    <div class="editor-bloco-form" style="margin-top:20px;">
+      <div class="form-group" style="margin-bottom:0;"><label>Aba</label>
+        <select id="bloco-aba" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:inherit;font-size:14.5px;outline:none;">
+          <option value="edital">Edital</option><option value="assuntos">Assuntos</option>
+          <option value="videos">Vídeos</option><option value="materiais-aba">Materiais</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;"><label>Título</label><input id="bloco-titulo-inp" type="text" placeholder="Título do bloco" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:inherit;font-size:14.5px;outline:none;" /></div>
+      <div class="form-group" style="margin-bottom:0;"><label>Conteúdo</label><textarea id="bloco-corpo-inp" rows="6" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:inherit;font-size:14.5px;outline:none;resize:vertical;" placeholder="Texto do bloco…"></textarea></div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:6px;">Imagens</label>
+        <div id="bloco-images-preview" class="pending-images-preview"></div>
+        <button class="btn-ghost btn-sm" id="btn-bloco-add-img" style="margin-top:8px;">+ Imagem</button>
+        <input type="file" id="file-bloco-img" accept="image/*" multiple />
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:6px;">Links</label>
+        <div id="bloco-links-preview" class="pending-links-list"></div>
+        <button class="btn-ghost btn-sm" id="btn-bloco-add-link">+ Link</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-bloco-cancelar">Cancelar</button>
+      <button class="btn-primary" id="btn-bloco-salvar" style="width:auto;">Salvar bloco</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-perfil">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">Meu perfil</div>
+    <div class="avatar-upload-area">
+      <div class="avatar-lg" id="perfil-avatar-preview"></div>
+      <button class="btn-ghost btn-sm" id="btn-trocar-avatar">Trocar foto</button>
+      <input type="file" id="file-avatar" accept="image/*" />
+    </div>
+    <div class="form-group"><label>Nome completo</label><input id="perfil-nome" type="text" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;" /></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-perfil-fechar">Fechar</button>
+      <button class="btn-primary" id="btn-perfil-salvar" style="width:auto;">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-senha">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title">Mudar senha</div>
+    <div class="modal-sub">Um link de redefinição será enviado para o e-mail vinculado à sua conta.</div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-senha-cancelar">Cancelar</button>
+      <button class="btn-primary" id="btn-senha-enviar" style="width:auto;">Enviar link</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-novo-sim">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-title" id="modal-sim-titulo">Novo simulado</div>
+    <div style="margin-top:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="form-group" style="margin-bottom:0;"><label>Nome do simulado</label><input id="sim-nome-inp" type="text" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;" placeholder="Ex: Simulado Direito Constitucional 01" /></div>
+      <div class="form-group" style="margin-bottom:0;"><label>Tipo</label>
+        <select id="sim-tipo-inp" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;">
+          <option value="materia">Matéria (múltiplas tentativas)</option>
+          <option value="geral">Geral (tentativa única)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;"><label>Matéria (se tipo matéria)</label>
+        <select id="sim-materia-inp" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;">
+          <option value="">— Nenhuma —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-novo-sim-cancelar">Cancelar</button>
+      <button class="btn-primary" id="btn-novo-sim-criar" style="width:auto;">Criar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-novo-mat">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title" id="modal-mat-titulo">Novo material</div>
+    <div style="margin-top:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="form-group" style="margin-bottom:0;"><label>Nome</label><input id="mat-nome-inp" type="text" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;" placeholder="Ex: Apostila Direito Constitucional" /></div>
+      <div class="form-group" style="margin-bottom:0;"><label>URL</label><input id="mat-url-inp" type="text" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;" placeholder="https://..." /></div>
+      <div class="form-group" style="margin-bottom:0;"><label>Descrição (opcional)</label><input id="mat-desc-inp" type="text" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;" placeholder="Breve descrição" /></div>
+      <div class="form-group" style="margin-bottom:0;"><label>Tipo</label>
+        <select id="mat-tipo-inp" style="width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none;">
+          <option value="pdf">PDF</option><option value="edital">Edital</option><option value="video">Vídeo</option>
+          <option value="ppt">Apresentação</option><option value="doc">Documento</option>
+          <option value="site">Site</option><option value="outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btn-novo-mat-cancelar">Cancelar</button>
+      <button class="btn-primary" id="btn-novo-mat-salvar" style="width:auto;">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" class="hidden">
+  <button id="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="Imagem ampliada" />
+</div>
+
+<!-- TOASTS -->
+<div id="toast-container"></div>
+
+<!-- Inputs de arquivo globais -->
+<input type="file" id="file-compose-img" accept="image/*" multiple />
+<input type="file" id="file-questao-img" accept="image/*" multiple />
+
+<!-- JavaScript principal — módulo ES, carregado após o HTML -->
+<script type="module" src="assets/js/main.js"></script>
+
+</body>
+</html>
